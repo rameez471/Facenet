@@ -34,7 +34,7 @@ def inception_block_1a(x):
     x_1x1 = BatchNormalization(axis=1, epsilon=0.00001)(x_1x1)
     x_1x1 = Activation('relu')(x_1x1)
 
-    inception = Concatenate([x_3x3, x_5x5, x_pool, x_1x1],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_5x5, x_pool, x_1x1])
 
     return inception
 
@@ -66,7 +66,7 @@ def inception_block_1b(x):
     x_1x1 = BatchNormalization(axis=1, epsilon=0.00001)(x_1x1)
     x_1x1 = Activation('relu')(x_1x1)
 
-    inception = Concatenate([x_3x3, x_5x5, x_pool, x_1x1],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_5x5, x_pool, x_1x1])
 
     return inception
 
@@ -91,7 +91,7 @@ def inception_block_1c(x):
     x_pool = MaxPool2D(pool_size=(3,3),strides=(2,2),data_format='channels_first')(x)
     x_pool = ZeroPadding2D(((0,1),(0,1)),data_format='channels_first')(x_pool)
 
-    inception = Concatenate([x_3x3, x_5x5, x_pool], axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_5x5, x_pool])
 
     return inception
 
@@ -122,7 +122,7 @@ def inception_block_2a(x):
     x_1x1 = BatchNormalization(axis=1, epsilon=0.00001)(x_1x1)
     x_1x1 = Activation('relu')(x_1x1)
 
-    inception = Concatenate([x_3x3, x_5x5, x_pool, x_1x1],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_5x5, x_pool, x_1x1])
 
     return inception
 
@@ -147,7 +147,7 @@ def inception_block_2b(x):
     x_pool = MaxPool2D(pool_size=(3,3),strides=(2,2),data_format='channels_first')(x)
     x_pool = ZeroPadding2D(((0,1),(0,1)),data_format='channels_first')(x_pool)
 
-    inception = Concatenate([x_3x3, x_5x5, x_pool],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_5x5, x_pool])
 
     return inception
 
@@ -171,7 +171,7 @@ def inception_block_3a(x):
     x_1x1 = BatchNormalization(axis=1, epsilon=0.00001)(x_1x1)
     x_1x1 = Activation('relu')(x_1x1)
 
-    inception = Concatenate([x_3x3, x_pool, x_1x1],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_pool, x_1x1])
 
     return inception
 
@@ -195,6 +195,72 @@ def inception_block_3b(x):
     x_1x1 = BatchNormalization(axis=1, epsilon=0.00001)(x_1x1)
     x_1x1 = Activation('relu')(x_1x1)
 
-    inception = Concatenate([x_3x3, x_pool, x_1x1],axis=1)
+    inception = Concatenate(axis=1)([x_3x3, x_pool, x_1x1])
 
     return inception
+
+def Inception(input_shape):
+    """
+    Arguments:
+    input_shape: Shape of images
+
+    Return:
+    a Model() instance
+    """
+
+    x_input = Input(input_shape)
+
+    x = ZeroPadding2D((3,3))(x_input)
+
+    #First Block
+    x = Conv2D(64,7,strides=(2,2))(x)
+    x = BatchNormalization(axis=1)(x)
+    x = Activation('relu')(x)
+
+    #ZeroPadding + MaxPool
+    x = ZeroPadding2D((1,1))(x)
+    x = MaxPool2D(pool_size=(3,3),strides=(2,2))(x)
+
+    #Second Block
+    x = Conv2D(64, 1, strides=(1,1))(x)
+    x = BatchNormalization(axis=1)(x)
+    x = Activation('relu')(x)
+
+    #ZeroPadding + MaxPool
+    x = ZeroPadding2D((1,1))(x)
+
+    #Third Block
+    x = Conv2D(192, 3, strides=(1,1))(x)
+    x = BatchNormalization(axis=1, epsilon=0.00001)(x)
+    x = Activation('relu')(x)
+
+    #ZeroPadding + MaxPool
+    x = ZeroPadding2D((1,1))(x)
+    x = MaxPool2D(pool_size=(3,3),strides=(2,2))(x)
+
+    #Inception 1
+    # x = inception_block_1a(x)
+    x = inception_block_1b(x)
+    x = inception_block_1c(x)
+
+    #Inception 2
+    x = inception_block_2a(x)
+    x = inception_block_2b(x)
+
+    #Inception 3
+    x = inception_block_3a(x)
+    x = inception_block_3b(x)
+
+    #Top Layer
+    x = AveragePooling2D(pool_size=(3,3), strides=(2,2), data_format='channels_first')(x)
+    x = Flatten()(x)
+    x = Dense(128)(x)
+
+    #L2 normalization
+    output = Lambda(lambda x: tf.math.l2_normalize(x, axis=1))(x)
+
+    model = Model(inputs=x, outputs=output)
+    return model
+
+
+model = Inception((3,224,224))
