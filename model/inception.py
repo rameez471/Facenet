@@ -523,4 +523,6 @@ face_encoder = InceptionResNetV2()
 # Load the weights of the model
 path = "facenet_keras_weights.h5"
 face_encoder.load_weights(path)
-print(face_encoder.summary())
+
+with open('summary.txt','w') as f:
+    face_encoder.summary(print_fn=lambda x: f.write(x+'\n'))
