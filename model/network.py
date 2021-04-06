@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import Model, Input
-from tensorflow.keras.layers import Conv2D,MaxPool2D,PReLU,Permute, Softmax
+from tensorflow.keras.layers import Conv2D,MaxPool2D,PReLU,Permute, Softmax, Flatten, Dense
 
 def PNet():
 
@@ -31,7 +31,39 @@ def PNet():
     return model
 
 
-model = PNet()
+def RNet():
 
-with open('../data/p_net_summary.txt','w') as f:
+    x_input = Input((24,24,3))
+
+    x = Permute([2,1,3],name='rnet_permute_1')(x_input)
+    x = Conv2D(28,3,1,name='rnet_conv_1')(x)
+    x = PReLU(shared_axes=[1,2,3],name='rnet_prelu_1')(x)
+    x = MaxPool2D(3,2,padding='same',name='rnet_maxpool_1')(x)
+
+    x = Conv2D(48,3,1,name='rnet_conv_2')(x)
+    x = PReLU(shared_axes=[1,2],name='rnet_prelu_2')(x)
+    x = MaxPool2D(3,2,name='rnet_maxpool_2')(x)
+
+    x = Conv2D(64,2,1,name='rnet_conv_3')(x)
+    x = PReLU(shared_axes=[1,2],name='rnet_prelu_3')(x)
+
+    x = Flatten(name='rnet_flatten')(x)
+    x = Dense(128, name='rnet_dense')(x)
+    x = PReLU(name='rnet_prelu_4')(x)
+
+    #Branch 1
+    a = Dense(2, name='rent_branch_1')(x)
+    a = Softmax()(a)
+
+    #Branch 2
+    b = Dense(4,name='rnet_brnach_2')(x)
+
+    model = Model(inputs=x_input, outputs=[a,b])
+
+    return model
+
+
+model = RNet()
+
+with open('../data/r_net_summary.txt','w') as f:
     model.summary(print_fn=lambda x: f.write(x+'\n'))
