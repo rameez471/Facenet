@@ -28,6 +28,8 @@ def PNet():
 
     model = Model(inputs=x_input, outputs=[a,b])
 
+    model.load_weights('../data/pnet.h5')
+
     return model
 
 
@@ -37,7 +39,7 @@ def RNet():
 
     x = Permute((2,1,3),name='rnet_permute_1')(x_input)
     x = Conv2D(28,3,1,name='rnet_conv_1')(x)
-    x = PReLU(shared_axes=[1,2,3],name='rnet_prelu_1')(x)
+    x = PReLU(shared_axes=[1,2],name='rnet_prelu_1')(x)
     x = MaxPool2D(3,2,padding='same',name='rnet_maxpool_1')(x)
 
     x = Conv2D(48,3,1,name='rnet_conv_2')(x)
@@ -60,6 +62,8 @@ def RNet():
 
     model = Model(inputs=x_input, outputs=[a,b])
 
+    model = model.load_weights('../data/rnet.h5')
+
     return model
 
 
@@ -67,7 +71,7 @@ def ONet():
 
     x_input = Input((48,48,3))
 
-    x = Permute([2,1,3],name='onet_permute')(x_input)
+    x = Permute((2,1,3),name='onet_permute')(x_input)
     x = Conv2D(32,3,1,name='onet_conv_1')(x)
     x = PReLU(shared_axes=[1,2],name='onet_prelu_1')(x)
     x = MaxPool2D(3,2,padding='same',name='onet_maxpool_1')(x)
@@ -89,6 +93,7 @@ def ONet():
 
     # Output 1 
     a = Dense(2, name='output_1')(x)
+    a = Softmax()(a)
 
     #Output 2
     b = Dense(4, name='output_2')(x)
@@ -98,10 +103,13 @@ def ONet():
 
     model = Model(inputs=x_input, outputs=[a,b,c])
 
+    model.load_weights('../data/onet.h5')
+
     return model
 
 
-model = ONet()
+# pnet = PNet()
+# rnet = RNet()
+# onet = ONet()
 
-with open('../data/o_net_summary.txt','w') as f:
-    model.summary(print_fn=lambda x: f.write(x+'\n'))
+# print('I did it bitch!!')
