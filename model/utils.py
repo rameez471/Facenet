@@ -63,13 +63,13 @@ def get_image_boxes(bboxes, img, height, width, num_boxes, size=24):
         num_boxes: Number of boxes
         size: Size of the cut-out
     """
-    x1 = tf.math.maximum(bboxes[:,1],0) / width
-    y1 = tf.math.maximum(bboxes[:,2],0) / height
-    x2 = tf.math.maximum(bboxes[:,3],0) / width
-    y2 = tf.math.maximum(bboxes[:,4],0) / height
+    x1 = tf.math.maximum(bboxes[:,0],0.0) / width
+    y1 = tf.math.maximum(bboxes[:,1],0.0) / height
+    x2 = tf.math.minimum(bboxes[:,2],width) / width
+    y2 = tf.math.minimum(bboxes[:,3],height) / height
 
-    boxes = tf.stack([x1,y1,x2,y2],1)
-    img_boxes = tf.image.crop_and_resize(tf.expand_dims(img,0),boxes,tf.zeros(num_boxes, dtype=tf.float32),(size,size))
+    boxes = tf.stack([y1,x1,y2,x2],1)
+    img_boxes = tf.image.crop_and_resize(tf.expand_dims(img,0),boxes,tf.zeros(num_boxes, dtype=tf.int32),(size,size))
 
     img_boxes = preprocess(img_boxes)
 
@@ -79,6 +79,8 @@ def generate_boxes(probs, offsets, scale, threshold):
 
     stride = 2
     cell_size = 12
+
+    probs = probs[:,:,1]
 
     indices = tf.where(probs > threshold)
     if indices.shape[0] == 0:
@@ -90,12 +92,11 @@ def generate_boxes(probs, offsets, scale, threshold):
     indices = tf.cast(indices,tf.float32)
 
     bboxes = tf.concat([
-        tf.expand_dims(tf.math.round((stride * indices[:, 1]) / scale),1),
-        tf.expand_dims(tf.math.round((stride * indices[:, 0]) / scale),1),
-        tf.expand_dims(tf.math.round((stride * indices[:, 1]) + cell_size),1),
-        tf.expand_dims(tf.math.round((stride * indices[:, 0]) + cell_size),1),
-        scores,
-        offsets
-    ],1)
+        tf.expand_dims(tf.math.round((stride * indices[:, 1]) / scale), 1),
+        tf.expand_dims(tf.math.round((stride * indices[:, 0]) / scale), 1),
+        tf.expand_dims(tf.math.round((stride * indices[:, 1] + cell_size) / scale), 1),
+        tf.expand_dims(tf.math.round((stride * indices[:, 0] + cell_size) / scale), 1),
+        scores, offsets
+    ], 1)
 
     return bboxes

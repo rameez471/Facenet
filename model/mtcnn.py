@@ -25,7 +25,7 @@ class MTCNN(object):
             return self.scale_cache[min_length]
 
         min_detection_size = 12
-        factor = 7.07
+        factor = 0.707
         scales = []
         m = min_detection_size / self.min_face_size
         min_length *= m
@@ -48,12 +48,12 @@ class MTCNN(object):
 
         img_in = tf.image.resize(img,(hs,ws))
         img_in = preprocess(img_in)
-        img_in = tf.expand_dims(img_in, axis=0)
+        img_in = tf.expand_dims(img_in, 0)
 
         probs, offsets = self.pnet(img_in)
         boxes = generate_boxes(probs[0], offsets[0], scale, self.thresholds[0])
 
-        if len(boxes[0]) == 0:
+        if len(boxes) == 0:
             return boxes
 
         keep = tf.image.non_max_suppression(boxes[:,0:4], boxes[:,4], self.max_output_size, iou_threshold=0.5)
@@ -65,7 +65,7 @@ class MTCNN(object):
     @tf.function()
     def stage_one_filter(self,boxes):
 
-        bboxes,score,offsets = boxes[:,:4], boxes[:,5], boxes[:,5:]
+        bboxes,score,offsets = boxes[:,:4], boxes[:,4], boxes[:,5:]
 
         bboxes = callibrate_bbox(bboxes,offsets)
         bboxes = box_to_square(bboxes)
@@ -96,9 +96,9 @@ class MTCNN(object):
 
         probs, offsets = self.rnet(img_boxes)
 
-        keep = tf.where(probs[:,1] > self.thresholds[1])[0]
+        keep = tf.where(probs[:,1] > self.thresholds[1])[:,0]
         bboxes = tf.gather(bboxes, keep)
-        scores = tf.gather(probs, keep)
+        scores = tf.gather(probs[:,1], keep)
         offsets = tf.gather(offsets, keep)
 
         bboxes = callibrate_bbox(bboxes, offsets)
@@ -118,7 +118,7 @@ class MTCNN(object):
         keep = tf.where(probs[:,1] > self.thresholds[2])[:,0]
         bboxes = tf.gather(bboxes, keep)
         offsets = tf.gather(offsets, keep)
-        scores = tf.gather(probs, keep)
+        scores = tf.gather(probs[:,1], keep)
         landmarks = tf.gather(landmarks, keep)
 
         width = tf.expand_dims(bboxes[:,2] - bboxes[:,0]+1.0, 1)
@@ -157,6 +157,3 @@ class MTCNN(object):
 
         return bboxes, landmarks, scores
 
-
-mtcnn = MTCNN()
-print('MTCNN Succesfull......')
