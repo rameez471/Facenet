@@ -27,7 +27,7 @@ def box_to_square(bbox):
     ],1)
 
 
-def calibrate_bbox(bboxes, offsets):
+def callibrate_bbox(bboxes, offsets):
     """
     Correcting bounding box by offsets given by network
     Input: 
