@@ -112,7 +112,7 @@ class MTCNN(object):
     @tf.function()
     def stage_three(self, bboxes, img, height, width, num_boxes):
 
-        img_boxes = get_image_boxes(bboxes, img, height, width, num_boxes, size= 48):
+        img_boxes = get_image_boxes(bboxes, img, height, width, num_boxes, size= 48)
         probs, offsets, landmarks = self.onet(img_boxes)
 
         keep = tf.where(probs[:,1] > self.thresholds[2])[:,0]
@@ -136,3 +136,27 @@ class MTCNN(object):
         scores = tf.gather(scores, keep)
 
         return bboxes, landmarks, scores
+
+
+    def detect(self, img):
+
+        height, width, _ = img.shape
+
+        img = tf.convert_to_tensor(img, tf.float32)
+        scales = self.get_scales(height, width)
+
+        bboxes = self.stage_one(img, scales)
+        if len(bboxes) == 0:
+            return [],[],[]
+
+        bboxes = self.stage_two(bboxes, img, height, width, bboxes.shape[0])
+        if len(bboxes) == 0:
+            return [],[],[]
+
+        bboxes, landmarks, scores = self.stage_three(bboxes, img, height, width, bboxes.shape[0])
+
+        return bboxes, landmarks, scores
+
+
+mtcnn = MTCNN()
+print('MTCNN Succesfull......')
