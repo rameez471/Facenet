@@ -90,3 +90,49 @@ class MTCNN(object):
 
         return self.stage_one_filter(boxes)
 
+    def stage_two(self, bboxes, img, height, width, num_boxes):
+
+        img_boxes = get_image_boxes(bboxes, img, height, width, num_boxes)
+
+        probs, offsets = self.rnet(img_boxes)
+
+        keep = tf.where(probs[:,1] > self.thresholds[1])[0]
+        bboxes = tf.gather(bboxes, keep)
+        scores = tf.gather(probs, keep)
+        offsets = tf.gather(offsets, keep)
+
+        bboxes = callibrate_bbox(bboxes, offsets)
+        bboxes = box_to_square(bboxes)
+
+        keep = tf.image.non_max_suppression(bboxes, scores, self.max_output_size, self.nms_threshold[1])
+        bboxes = tf.gather(bboxes, keep)
+
+        return bboxes
+
+    @tf.function()
+    def stage_three(self, bboxes, img, height, width, num_boxes):
+
+        img_boxes = get_image_boxes(bboxes, img, height, width, num_boxes, size= 48):
+        probs, offsets, landmarks = self.onet(img_boxes)
+
+        keep = tf.where(probs[:,1] > self.thresholds[2])[:,0]
+        bboxes = tf.gather(bboxes, keep)
+        offsets = tf.gather(offsets, keep)
+        scores = tf.gather(probs, keep)
+        landmarks = tf.gather(landmarks, keep)
+
+        width = tf.expand_dims(bboxes[:,2] - bboxes[:,0]+1.0, 1)
+        height = tf.expand_dims(bboxes[:,3] - bboxes[:,1]+1.0, 1)
+        xmin = tf.expand_dims(bboxes[:,0],1)
+        ymin = tf.expand_dims(bboxes[:,1],1)
+        landmarks = tf.concat([xmin + width * landmarks[:,0:5],
+                              ymin + height * landmarks[:,5:10]],1)
+        
+        bboxes = callibrate_bbox(bboxes, offsets)
+        keep = tf.image.non_max_suppression(bboxes, scores, self.max_output_size, self.nms_threshold[2])
+
+        bboxes = tf.gather(bboxes, keep)
+        landmarks = tf.gather(landmarks, keep)
+        scores = tf.gather(scores, keep)
+
+        return bboxes, landmarks, scores
