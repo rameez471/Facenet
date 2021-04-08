@@ -1,6 +1,6 @@
 import tensorflow as tensorflow
-from network import *
-from utils import * 
+from .network import *
+from .utils import * 
 
 DEFAULT_THESHOLDSS = [0.7,0.8,0.9]
 DEFAULT_NMS_THRESHOLDS = [0.6,0.6,0.6]

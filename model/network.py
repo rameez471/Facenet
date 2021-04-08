@@ -28,7 +28,7 @@ def PNet():
 
     model = Model(inputs=x_input, outputs=[a,b])
 
-    model.load_weights('../data/pnet.h5')
+    model.load_weights('./data/pnet.h5')
 
 
     return model
@@ -63,7 +63,7 @@ def RNet():
 
     model = Model(inputs=x_input, outputs=[a,b])
 
-    model.load_weights('../data/rnet.h5')
+    model.load_weights('./data/rnet.h5')
     
     return model
 
@@ -104,7 +104,7 @@ def ONet():
 
     model = Model(inputs=x_input, outputs=[a,b,c])
 
-    model.load_weights('../data/onet.h5')
+    model.load_weights('./data/onet.h5')
 
 
     return model
