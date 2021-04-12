@@ -15,12 +15,14 @@ crop_width = 160
 
 mtcnn = MTCNN()
 
-files_types = ['pairs.txt','pairs_01.txt','pairs_02.txt','pairs_03.txt','pairs_04.txt','pairs_05.txt','pairs_06.txt','pairs_07.txt','pairs_08.txt','pairs_09.txt','pairs_10.txt']
+exclude_file = ['pairs.txt','pairs_01.txt','pairs_02.txt','pairs_03.txt','pairs_04.txt','pairs_05.txt','pairs_06.txt','pairs_07.txt','pairs_08.txt','pairs_09.txt','pairs_10.txt']
 
 total_num = 0
 cropped_num = 0
 
 for folder in os.listdir(dirname):
+    if folder in exclude_file:
+        continue
     os.mkdir(put_dirname+'/'+folder)
     for file in os.listdir(dirname+'/'+folder):
         img = cv2.imread(dirname+'/'+folder+'/'+file)
