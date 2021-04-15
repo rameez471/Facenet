@@ -36,6 +36,7 @@ for folder in os.listdir(dirname):
         img_crop = img_in[int(box[1]):int(box[3]),int(box[0]):int(box[2]) , :] 
         try:
             img_crop = cv2.cvtColor(img_crop, cv2.COLOR_RGB2BGR)
+            
         except:
             continue
         cv2.imwrite(put_dirname+'/'+folder+'/'+file, img_crop)
