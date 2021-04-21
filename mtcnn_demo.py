@@ -1,6 +1,9 @@
 import cv2
 from model.mtcnn import MTCNN
 import argparse
+import tensorflow as tf
+import string
+import random
 
 def draw_faces(img, bboxes, landmarks, scores):
     for box, landmark, score in zip(bboxes, landmarks, scores):
@@ -12,6 +15,8 @@ def draw_faces(img, bboxes, landmarks, scores):
             img = cv2.circle(img, (x, y), 1, (0, 255, 0))
         img = cv2.putText(img, '{:.2f}'.format(score), (int(box[0]), int(box[1])),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255))
+        
+            
     return img
 
 def image(input_path):
@@ -30,8 +35,6 @@ def image(input_path):
 def video(input_path, output_path):
 
     mtcnn = MTCNN()
-    input_path = 'michael.mp4'
-    output_path = 'michael_result.mp4'
 
     vid = cv2.VideoCapture(input_path)
     if not vid.isOpened():
@@ -66,18 +69,24 @@ def video(input_path, output_path):
     cv2.destroyAllWindows()
 
 
-parser = argparse.ArgumentParser(description='Demo')
+input_path = './examples/michael.mp4'
+output_path = './examples/rec_result.mp4'
 
-parser.add_argument('--image_input',help='Inpt Image')
 
-parser.add_argument('--video_input',help='Input Video')
-parser.add_argument('--video_output',help='Output video location')
+video(input_path, output_path)
 
-if __name__ == '__main__':
+# parser = argparse.ArgumentParser(description='Demo')
 
-    args = parser.parse_args()
-    if args.image_input:
-        image(args.image_input)
+# parser.add_argument('--image_input',help='Inpt Image')
 
-    else:
-        video(args.video_input, args.video_output)
+# parser.add_argument('--video_input',help='Input Video')
+# parser.add_argument('--video_output',help='Output video location')
+
+# if __name__ == '__main__':
+
+#     args = parser.parse_args()
+#     if args.image_input:
+#         image(args.image_input)
+
+#     else:
+#         video(args.video_input, args.video_output)
