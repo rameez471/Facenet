@@ -7,6 +7,7 @@ from tensorflow.keras.layers import Layer
 from tensorflow.keras import Input, Model
 from tensorflow.keras import backend as K
 import matplotlib.pyplot as plt
+import time
 
 def buildDataset(dirname):
     X,y = [],[]
@@ -144,5 +145,23 @@ X = dataset
 face_encoder = InceptionResNetV2()
 face_encoder.load_weights('./data/facenet_keras_weights.h5')
 
-triplets = get_batch_hard(32,8,8,face_encoder)
-print(np.array(triplets).shape)
+
+model = built_model((160,160,3),face_encoder)
+optimizer = tf.keras.optimizers.Adam(lr=0.00006)
+model.compile(loss=None, optimizer=optimizer)
+
+print('Starting training.....')
+
+t_start = time.time()
+n_iter = 15
+
+for i in range(1,n_iter+1):
+    triplets = get_batch_hard(64,16,16,face_encoder)
+    loss = model.train_on_batch(triplets,None)
+    
+    print('\n------------\n')
+    print(" Time for {0} iterations: {1:.1f} mins, Train Loss: {2}".format(i, (time.time()-t_start)/60.0,loss))
+
+    i+=1
+
+face_encoder.save_weights('./data/test/bvs.h5')
