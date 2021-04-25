@@ -42,8 +42,8 @@ for folder in os.listdir(crop_dirname):
         img_in = tf.image.resize(img,(160,160))
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
-        embedding = face_encoder(img_in)[0].numpy()
-        embedding = l2_normalize(embedding)
+        embedding = face_encoder(img_in).numpy()
+        embedding = l2_normalize(embedding)[0]
         embeddings.append(embedding)
         labels.append(idx)
     idx += 1
@@ -90,7 +90,7 @@ sns.scatterplot(
     data=df.loc[rndperm,:],
     legend='full'
 )
-plt.savefig('./data/test/PCA_untrained.png')
+plt.savefig('./data/test/PCA_pretrained.png')
 
 ax = plt.figure(figsize=(16,10)).gca(projection='3d')
 ax.scatter(
@@ -102,6 +102,6 @@ ax.scatter(
 ax.set_xlabel('pca_one')
 ax.set_ylabel('pca_two')
 ax.set_zlabel('pca_three')
-plt.savefig('./data/test/3D_untrained.png')
+plt.savefig('./data/test/3D_pretrained.png')
 
 

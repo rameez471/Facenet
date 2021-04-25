@@ -32,8 +32,7 @@ crop_dirname = './data/test/images_cropped'
 crop_size = 160
 
 mtcnn = MTCNN()
-face_encoder = InceptionResNetV2()
-face_encoder.load_weights('./data/test/bvs_finetuned.h5')
+face_encoder = tf.keras.models.load_model('./data/facenet_keras.h5')
 
 X,y = [],[]
 idx = 0
@@ -48,7 +47,7 @@ for folder in os.listdir(crop_dirname):
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
         embedding = face_encoder(img_in).numpy()
-        # embedding = l2_normalize(embedding)
+        embedding = l2_normalize(embedding)
         X.append(embedding)
         y.append(idx)
     idx += 1
@@ -56,9 +55,10 @@ for folder in os.listdir(crop_dirname):
 X = np.array(X)
 y = np.array(y)
 
-threshold = 0.6
+num_images = X.shape[0]
+threshold = 0.65
 
-input_path = './data/test/bvs.mp4'
+input_path = './data/test/bvs_Trim.mp4'
 output_path = './data/test/bvs_result.mp4'
 
 vid = cv2.VideoCapture(input_path)
@@ -82,10 +82,12 @@ while True:
 
     for box, landmark, score in zip(bboxes, landmarks, scores):
         img_crop = img_in[int(box[1]):int(box[3]),int(box[0]):int(box[2]) , :] 
-        img_in = tf.image.resize(img,(160,160))
-        img_in *= 1./255
-        img_in = tf.expand_dims(img_in,0)
-        unknown = face_encoder(img_in).numpy()
+        if img_crop.size == 0:
+            continue
+        img_crop = tf.image.resize(img_crop,(160,160))
+        img_crop *= 1./255
+        img_crop = tf.expand_dims(img_crop,0)
+        unknown = face_encoder(img_crop).numpy()
         unknown = l2_normalize(unknown)
         distances = []
         for i in range(num_images):
@@ -95,7 +97,7 @@ while True:
         distances = np.array(distances)
         idx = np.argmin(distances)
         print(distances[idx])
-        if distances[idx] < 0.6:
+        if distances[idx] < threshold:
             
             person = class_name[y[idx]]
             img = cv2.rectangle(img, (int(box[0]), int(box[1])),
