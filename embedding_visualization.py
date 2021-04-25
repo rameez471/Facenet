@@ -10,7 +10,11 @@ import cv2
 from model.mtcnn import MTCNN
 import tensorflow as tf
 import pandas as pd
+from model.inception import InceptionResNetV2
+from mpl_toolkits.mplot3d import Axes3D
 
+def l2_normalize(x):
+    return x / np.sqrt(np.sum(np.multiply(x,x)))
 
 embeddings = []
 labels = []
@@ -23,7 +27,8 @@ crop_dirname = './data/test/images_cropped'
 crop_size = 160
 
 mtcnn = MTCNN()
-face_encoder = tf.keras.models.load_model('./data/facenet_keras.h5')
+face_encoder = InceptionResNetV2()
+face_encoder.load_weights('./data/facenet_keras_weights.h5')
 
 embeddings,labels = [],[]
 idx = 0
@@ -38,6 +43,7 @@ for folder in os.listdir(crop_dirname):
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
         embedding = face_encoder(img_in)[0].numpy()
+        embedding = l2_normalize(embedding)
         embeddings.append(embedding)
         labels.append(idx)
     idx += 1
@@ -84,42 +90,18 @@ sns.scatterplot(
     data=df.loc[rndperm,:],
     legend='full'
 )
-plt.savefig('PCA.png')
+plt.savefig('./data/test/PCA_untrained.png')
 
-tsne = TSNE(n_components=2, verbose=1,perplexity=40,n_iter=300)
-tsne_results = tsne.fit_transform(df[feat_cols].values)
-
-df['tsne-2d-one'] = tsne_results[:,0]
-df['tsne-2d-two'] = tsne_results[:,1]
-
-plt.figure(figsize=(16,10))
-
-sns.catplot(
-    x='tsne-2d-one', y='tsne-2d-two',
-    hue='y',
-    palette=sns.color_palette('hls',4),
-    data=df,
-    legend='full'
+ax = plt.figure(figsize=(16,10)).gca(projection='3d')
+ax.scatter(
+    xs = df.loc[rndperm,:]['pca_one'],
+    ys = df.loc[rndperm,:]['pca_two'],
+    zs = df.loc[rndperm,:]['pca_three'],
+    c = df.loc[rndperm,:]['y'],
 )
-plt.savefig('t-SNE.png')
+ax.set_xlabel('pca_one')
+ax.set_ylabel('pca_two')
+ax.set_zlabel('pca_three')
+plt.savefig('./data/test/3D_untrained.png')
 
-pca_10 = PCA(n_components=5)
-pca_result = pca_10.fit_transform(df[feat_cols].values)
 
-print('Cumulative explained variation for 50 principal components: {}'.format(np.sum(pca_10.explained_variance_ratio_)))
-
-tsne = TSNE(n_components=2, verbose=0, perplexity=40, n_iter=300)
-tsne_pca_results = tsne.fit_transform(pca_result)
-
-df['tsne-pca-10-one'] = tsne_pca_results[:,0]
-df['tsne-pca-10-two'] = tsne_pca_results[:,1]
-plt.figure(figsize=(16,10))
-
-sns.catplot(
-    x='tsne-pca-10-one', y='tsne-pca-10-one',
-    hue='y',
-    palette=sns.color_palette('hls',4),
-    data=df,
-    legend='full'
-)
-plt.savefig('t-SNE_50.png')

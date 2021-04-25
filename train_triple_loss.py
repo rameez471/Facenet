@@ -143,7 +143,7 @@ dataset, X, y,nb_classes = buildDataset(dirname)
 dataset = np.array(dataset)
 X = dataset
 face_encoder = InceptionResNetV2()
-face_encoder.load_weights('./data/facenet_keras_weights.h5')
+# face_encoder.load_weights('./data/test/bvs.h5')
 
 
 model = built_model((160,160,3),face_encoder)
@@ -153,10 +153,10 @@ model.compile(loss=None, optimizer=optimizer)
 print('Starting training.....')
 
 t_start = time.time()
-n_iter = 15
+n_iter = 20
 
 for i in range(1,n_iter+1):
-    triplets = get_batch_hard(64,16,16,face_encoder)
+    triplets = get_batch_hard(128,16,16,face_encoder)
     loss = model.train_on_batch(triplets,None)
     
     print('\n------------\n')
@@ -164,4 +164,4 @@ for i in range(1,n_iter+1):
 
     i+=1
 
-face_encoder.save_weights('./data/test/bvs.h5')
+face_encoder.save_weights('./data/test/bvs_new.h5')

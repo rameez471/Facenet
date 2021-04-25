@@ -23,13 +23,17 @@ def distance(embedding_1, embedding_2, distance_metric=0):
     return dist
 
 
+def l2_normalize(x):
+    return x / np.sqrt(np.sum(np.multiply(x,x)))
+
 image_dir = './data/test/images'
 crop_dirname = './data/test/images_cropped'
 
 crop_size = 160
 
 mtcnn = MTCNN()
-face_encoder = tf.keras.models.load_model('./data/facenet_keras.h5')
+face_encoder = InceptionResNetV2()
+face_encoder.load_weights('./data/test/bvs_finetuned.h5')
 
 X,y = [],[]
 idx = 0
@@ -43,7 +47,8 @@ for folder in os.listdir(crop_dirname):
         img_in = tf.image.resize(img,(160,160))
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
-        embedding = face_encoder(img_in)[0].numpy()
+        embedding = face_encoder(img_in).numpy()
+        # embedding = l2_normalize(embedding)
         X.append(embedding)
         y.append(idx)
     idx += 1
@@ -51,29 +56,7 @@ for folder in os.listdir(crop_dirname):
 X = np.array(X)
 y = np.array(y)
 
-
-
-
-param_grid = [
-                {'C': [1, 10, 100, 1000],
-                 'kernel': ['linear']},
-                {'C': [1, 10, 100, 1000],
-                 'gamma': [0.001, 0.0001],
-                 'kernel': ['rbf']}
-            ]
-svm = GridSearchCV(SVC(C=1,probability=True), param_grid, cv=5).fit(X, y)
-
-x = X[20]
-x = x.reshape(1,-1)
-
-print(svm.predict(x))
-print(y[20])
-print(svm.predict_proba(x))
-
-prob = svm.predict_proba(x)
-y_pred = np.argmax(prob)
-
-print(y_pred)
+threshold = 0.6
 
 input_path = './data/test/bvs.mp4'
 output_path = './data/test/bvs_result.mp4'
@@ -102,13 +85,19 @@ while True:
         img_in = tf.image.resize(img,(160,160))
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
-        unknown = face_encoder(img_in)[0].numpy()
-        prob = svm.predict_proba(unknown.reshape(1,-1))[0]
-        index = np.argmax(prob)
-        print(prob[index])
-        if prob[index] > 0.80:
-            person = class_name[index]
-            print(prob[index])
+        unknown = face_encoder(img_in).numpy()
+        unknown = l2_normalize(unknown)
+        distances = []
+        for i in range(num_images):
+            dist = np.linalg.norm(X[i]-unknown)
+            distances.append(dist)
+
+        distances = np.array(distances)
+        idx = np.argmin(distances)
+        print(distances[idx])
+        if distances[idx] < 0.6:
+            
+            person = class_name[y[idx]]
             img = cv2.rectangle(img, (int(box[0]), int(box[1])),
                             (int(box[2]), int(box[3])), (0, 255, 0), 2)
             img = cv2.putText(img,person ,(int(box[0]), int(box[1])),
@@ -126,16 +115,4 @@ while True:
         break
 
 cv2.destroyAllWindows()
-
-
-# print(np.linalg.norm(embeddings['Bruce_Wayne'] - embeddings['Clark_Kent']))
-# print(np.linalg.norm(embeddings['Bruce_Wayne'] - embeddings['Bruce_Wayne_2']))
-# print(np.linalg.norm(embeddings['Bruce_Wayne'] - embeddings['Alfred']))
-# print(np.linalg.norm(embeddings['Bruce_Wayne_2'] - embeddings['Clark_Kent']))
-
-
-# print(distance(embeddings['Bruce_Wayne'],embeddings['Clark_Kent']))
-# print(distance(embeddings['Bruce_Wayne'],embeddings['Bruce_Wayne_2']))
-# print(distance(embeddings['Bruce_Wayne'],embeddings['Alfred']))
-# print(distance(embeddings['Bruce_Wayne_2'],embeddings['Clark_Kent']))
 
