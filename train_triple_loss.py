@@ -10,6 +10,9 @@ import matplotlib.pyplot as plt
 import time
 
 def buildDataset(dirname):
+    """
+    
+    """
     X,y = [],[]
     idx = 0
     print(dirname)
@@ -33,6 +36,9 @@ def buildDataset(dirname):
     return dataset, X, y, idx
 
 def get_random(batch_size):
+    """
+    Function to get Random Triplets 
+    """
     m,w,h,c = X[0].shape
 
     triplets = [np.zeros((batch_size,h,w,c)) for i in range(3)]
@@ -56,7 +62,9 @@ def get_random(batch_size):
     return triplets
 
 def drawTriplets(triplebatch, nbmax=None):
-
+    """
+    Draw the triplets returned by get_batch_hard
+    """
     labels = ['Anchor','Positives','Negative']
 
     if nbmax==None:
@@ -70,7 +78,7 @@ def drawTriplets(triplebatch, nbmax=None):
         for i in range(3):
             subplot = fig.add_subplot(1,3,i+1)
             plt.axis('off')
-            plt.imshow(triplebatch[i][row,:,:,0],vmin=0,vmax=1)
+            plt.imshow(triplebatch[i][row,:,:,0],vmin=0,vmax=1,cmap='gray')
             subplot.title.set_text(labels[i])
         plt.show()
 
@@ -79,6 +87,9 @@ def compute_dist(a,b):
     return np.sum(np.square(a-b))
 
 def get_batch_hard(draw_batch_size, hard_batch_size, norm_batchs_size,network):
+    """
+    Get a Hard Batch
+    """
     m,w,h,x = X[0].shape
 
     studybatch = get_random(draw_batch_size)
@@ -102,7 +113,9 @@ def get_batch_hard(draw_batch_size, hard_batch_size, norm_batchs_size,network):
     return triplets
 
 class TripletLossLayer(Layer):
-
+    """
+    Loss Layer to calcualte triplet loss using encoding from networks
+    """
     def __init__(self,alpha,**kwargs):
         self.alpha = alpha
         super(TripletLossLayer, self).__init__(**kwargs)
@@ -121,7 +134,9 @@ class TripletLossLayer(Layer):
 
 
 def built_model(input_shape, network, margin=0.2):
-
+    """
+    Build a Saimeese Network to train facenet
+    """
     anchor_input = Input(input_shape, name='anchor_input')
     positive_input = Input(input_shape, name='positive_input')
     negative_input = Input(input_shape, name='negative_input')
@@ -143,8 +158,10 @@ dataset, X, y,nb_classes = buildDataset(dirname)
 dataset = np.array(dataset)
 X = dataset
 face_encoder = InceptionResNetV2()
-# face_encoder.load_weights('./data/test/bvs.h5')
+face_encoder.load_weights('./data/facenet_keras_weights.h5')
 
+# triplets = get_batch_hard(128,16,16,face_encoder)
+# drawTriplets(triplets)
 
 model = built_model((160,160,3),face_encoder)
 optimizer = tf.keras.optimizers.Adam(lr=0.00006)

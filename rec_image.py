@@ -36,7 +36,7 @@ num_images = X.shape[0]
 threshold = 0.9
 
 img = cv2.imread('demo_2.jpg')
-img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
 bboxes, landmarks, scores = mtcnn.detect(img_in)

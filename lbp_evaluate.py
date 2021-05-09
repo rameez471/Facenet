@@ -7,6 +7,8 @@ import math
 from sklearn.model_selection import KFold
 from scipy import interpolate
 
+def l2_normalize(x):
+    return x / np.sqrt(np.sum(np.multiply(x,x)))
 
 def getLBPImage(image):
 
@@ -30,10 +32,10 @@ def histogram(imgArray):
     return hist
 
 def distance(embedding_1, embedding_2, distance_metric=0):
-    if distance_metric==1:
+    if distance_metric==0:
         diff = np.subtract(embedding_1, embedding_2)
         dist = np.sum(np.square(diff),1)
-    elif distance_metric==0:
+    elif distance_metric==1:
         dot =  np.sum(np.multiply(embedding_1, embedding_2), axis=1)
         norm = np.linalg.norm(embedding_1, axis=1) * np.linalg.norm(embedding_2, axis=1)
         similarity = dot/norm
@@ -167,6 +169,7 @@ def get_embedding(path_list):
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         img = cv2.resize(img,(160,160))
         lbp = getLBPImage(img)
+        lbp = l2_normalize(np.expand_dims(lbp,0))[0]
         embeddings.append(lbp)
 
     return np.array(embeddings)

@@ -5,6 +5,9 @@ from model.inception import InceptionResNetV2
 import numpy as np
 from tqdm.auto import tqdm
 
+def l2_normalize(x):
+    return x / np.sqrt(np.sum(np.multiply(x,x)))
+
 dirname = './lwf/lwf_cropped'
 put_dirname = './lwf/embeddings'
 
@@ -27,7 +30,8 @@ for folder in tqdm(os.listdir(dirname)):
         img_in *= 1./255
         img_in = tf.expand_dims(img_in,0)
         
-        encoding = face_encoder(img_in)[0].numpy()
+        encoding = face_encoder(img_in).numpy()
+        encoding = l2_normalize(encoding)[0]
         np.save(put_dirname+'/'+folder+'/'+file, encoding)
     
 

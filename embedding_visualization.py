@@ -90,7 +90,8 @@ sns.scatterplot(
     data=df.loc[rndperm,:],
     legend='full'
 )
-plt.savefig('./data/test/PCA_pretrained.png')
+plt.title('Embedding Trained')
+plt.savefig('PCA_trained.png')
 
 ax = plt.figure(figsize=(16,10)).gca(projection='3d')
 ax.scatter(
@@ -102,6 +103,7 @@ ax.scatter(
 ax.set_xlabel('pca_one')
 ax.set_ylabel('pca_two')
 ax.set_zlabel('pca_three')
-plt.savefig('./data/test/3D_pretrained.png')
+plt.title('Embedding Trained')
+plt.savefig('3D_trained.png')
 
 

@@ -8,7 +8,13 @@ import math
 from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV
 
+
 def distance(embedding_1, embedding_2, distance_metric=0):
+    """
+    Function to calcuate distance betweeen two embeddings
+    1 -- Eucledian distances between embedding1 and embedding2
+    2 -- Cosine similarity between embedding1 and embedding2
+    """
     if distance_metric==1:
         diff = np.subtract(embedding_1, embedding_2)
         dist = np.sum(np.square(diff),1)
@@ -24,6 +30,9 @@ def distance(embedding_1, embedding_2, distance_metric=0):
 
 
 def l2_normalize(x):
+    """
+    L2 Normalize the numpy array
+    """
     return x / np.sqrt(np.sum(np.multiply(x,x)))
 
 image_dir = './data/test/images'
@@ -38,6 +47,7 @@ X,y = [],[]
 idx = 0
 class_name = []
 
+# Calculating the embeddings for each person and saving for comparing
 for folder in os.listdir(crop_dirname):
     class_name.append(folder)
     for file in os.listdir(crop_dirname+'/'+folder):
@@ -73,13 +83,15 @@ video_size = (int(vid.get(cv2.CAP_PROP_FRAME_WIDTH)),
 print("!!! TYPE: ", type(output_path),type(video_FourCC),type(video_fps),type(video_size))
 out = cv2.VideoWriter(output_path, video_FourCC, video_fps, video_size)
 
+#Looping the image frame by frame until every frame is processed.
 while True:
-    _,img = vid.read()
+    _,img = vid.read() #Read a frame
     if img is None:
         break
     img_in = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     bboxes, landmarks, scores = mtcnn.detect(img_in)
 
+    #Processing every face detected by MTCNN
     for box, landmark, score in zip(bboxes, landmarks, scores):
         img_crop = img_in[int(box[1]):int(box[3]),int(box[0]):int(box[2]) , :] 
         if img_crop.size == 0:
@@ -90,6 +102,8 @@ while True:
         unknown = face_encoder(img_crop).numpy()
         unknown = l2_normalize(unknown)
         distances = []
+
+        #Calculating similarity with each person 
         for i in range(num_images):
             dist = np.linalg.norm(X[i]-unknown)
             distances.append(dist)
@@ -97,8 +111,10 @@ while True:
         distances = np.array(distances)
         idx = np.argmin(distances)
         print(distances[idx])
+        # If minimum distance is less than threshold 
+        # person from our database detected otherwise
+        # face is unknown.
         if distances[idx] < threshold:
-            
             person = class_name[y[idx]]
             img = cv2.rectangle(img, (int(box[0]), int(box[1])),
                             (int(box[2]), int(box[3])), (0, 255, 0), 2)

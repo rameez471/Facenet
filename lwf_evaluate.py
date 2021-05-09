@@ -5,10 +5,10 @@ import math
 import os
 
 def distance(embedding_1, embedding_2, distance_metric=0):
-    if distance_metric==1:
+    if distance_metric==0:
         diff = np.subtract(embedding_1, embedding_2)
         dist = np.sum(np.square(diff),1)
-    elif distance_metric==0:
+    elif distance_metric==1:
         dot =  np.sum(np.multiply(embedding_1, embedding_2), axis=1)
         norm = np.linalg.norm(embedding_1, axis=1) * np.linalg.norm(embedding_2, axis=1)
         similarity = dot/norm
@@ -177,7 +177,7 @@ def get_paths(lfw_dir, pairs):
 
     return path_list, issame_list
 
-pairs_path = 'pairs.txt'
+pairs_path = './lwf/pairs.txt'
 pairs = read_pairs(pairs_path)
 
 crop_dir = './lwf/embeddings'
@@ -192,6 +192,7 @@ print('Accuracy: ',np.mean(accuracy))
 print('Validation Rate: ',val)
 print('False Accept Rate: ',far)
 
-# Accuracy:  0.9806666666666668
-# Validation Rate:  0.9076666666666666
+
+# Accuracy:  0.9795
+# Validation Rate:  0.905
 # False Accept Rate:  0.001
